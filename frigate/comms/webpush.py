@@ -163,6 +163,45 @@ class WebPushClient(Communicator):
     def is_camera_suspended(self, camera: str) -> bool:
         return datetime.datetime.now().timestamp() <= self.suspended_cameras[camera]
 
+    def _is_outside_schedule(self, camera: str) -> bool:
+        """Return True if the current time/day is outside the configured active_hours schedule."""
+        # Camera-specific schedule takes priority over the global schedule
+        schedule = (
+            self.config.cameras[camera].notifications.active_hours
+            or self.config.notifications.active_hours
+        )
+        if schedule is None:
+            return False  # No schedule configured — always active
+
+        now = datetime.datetime.now()
+        day_map = {
+            "mon": 0,
+            "tue": 1,
+            "wed": 2,
+            "thu": 3,
+            "fri": 4,
+            "sat": 5,
+            "sun": 6,
+        }
+
+        # Check day-of-week restriction
+        if schedule.days:
+            allowed = {
+                day_map[d.lower()] for d in schedule.days if d.lower() in day_map
+            }
+            if now.weekday() not in allowed:
+                return True
+
+        # Check time window
+        sh, sm = map(int, schedule.start.split(":"))
+        eh, em = map(int, schedule.end.split(":"))
+        start = now.replace(hour=sh, minute=sm, second=0, microsecond=0)
+        end = now.replace(hour=eh, minute=em, second=0, microsecond=0)
+
+        if end <= start:  # Overnight window (e.g. 22:00–06:00)
+            return not (now >= start or now < end)
+        return not (start <= now < end)
+
     def publish(self, topic: str, payload: Any, retain: bool = False) -> None:
         """Wrapper for publishing when client is in valid state."""
         # check for updated global config (notifications, auth)
@@ -194,6 +233,11 @@ class WebPushClient(Communicator):
             if self.is_camera_suspended(camera):
                 logger.debug(f"Notifications for {camera} are currently suspended.")
                 return
+            if self._is_outside_schedule(camera):
+                logger.debug(
+                    f"Notifications for {camera} are outside the active schedule."
+                )
+                return
             self.send_alert(decoded)
         if topic == "triggers":
             decoded = json.loads(payload)
@@ -216,6 +260,11 @@ class WebPushClient(Communicator):
             if self.is_camera_suspended(camera):
                 logger.debug(f"Notifications for {camera} are currently suspended.")
                 return
+            if self._is_outside_schedule(camera):
+                logger.debug(
+                    f"Notifications for {camera} are outside the active schedule."
+                )
+                return
             self.send_trigger(decoded)
         elif topic == "camera_monitoring":
             decoded = json.loads(payload)
@@ -224,6 +273,11 @@ class WebPushClient(Communicator):
                 return
             if self.is_camera_suspended(camera):
                 logger.debug(f"Notifications for {camera} are currently suspended.")
+                return
+            if self._is_outside_schedule(camera):
+                logger.debug(
+                    f"Notifications for {camera} are outside the active schedule."
+                )
                 return
             self.send_camera_monitoring(decoded)
         elif topic == "notification_test":
