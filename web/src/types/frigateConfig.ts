@@ -142,6 +142,11 @@ export interface CameraConfig {
     enabled: boolean;
     email?: string;
     enabled_in_config: boolean;
+    active_hours?: {
+      start: string;
+      end: string;
+      days: string[];
+    };
   };
   objects: {
     filters: {
@@ -549,6 +554,11 @@ export interface FrigateConfig {
     enabled: boolean;
     email?: string;
     enabled_in_config: boolean;
+    active_hours?: {
+      start: string;
+      end: string;
+      days: string[];
+    };
   };
 
   objects: {
