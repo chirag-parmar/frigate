@@ -1053,6 +1053,25 @@
       "untilRestart": "Suspend until restart"
     },
     "cancelSuspension": "Cancel Suspension",
+    "activeHours": {
+      "title": "Active Hours",
+      "desc": "Only send notifications during specific times and days. Camera-level active hours override this global setting.",
+      "enabled": "Restrict to active hours",
+      "timezone": "Timezone",
+      "timezonePlaceholder": "e.g. America/New_York",
+      "startTime": "From",
+      "endTime": "To",
+      "addSlot": "Add time slot",
+      "dayNames": {
+        "mon": "Mon",
+        "tue": "Tue",
+        "wed": "Wed",
+        "thu": "Thu",
+        "fri": "Fri",
+        "sat": "Sat",
+        "sun": "Sun"
+      }
+    },
     "toast": {
       "success": {
         "registered": "Successfully registered for notifications. Restarting Frigate is required before any notifications (including a test notification) can be sent.",

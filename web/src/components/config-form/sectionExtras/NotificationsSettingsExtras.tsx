@@ -23,8 +23,8 @@ import {
   useRef,
   useState,
 } from "react";
-import { useForm } from "react-hook-form";
-import { LuCheck, LuExternalLink, LuX } from "react-icons/lu";
+import { useFieldArray, useForm, useWatch } from "react-hook-form";
+import { LuCheck, LuExternalLink, LuPlus, LuTrash2, LuX } from "react-icons/lu";
 import { CiCircleAlert } from "react-icons/ci";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
@@ -60,6 +60,8 @@ import { sanitizeSectionData } from "@/utils/configUtil";
 import type { SectionRendererProps } from "./registry";
 
 const NOTIFICATION_SERVICE_WORKER = "/notifications-worker.js";
+const DAYS_OF_WEEK = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"] as const;
+type DaySlot = { days: string[]; start: string; end: string };
 import {
   SettingsGroupCard,
   SPLIT_ROW_CLASS_NAME,
@@ -144,6 +146,11 @@ export default function NotificationsSettingsExtras({
     allEnabled: z.boolean(),
     email: z.string(),
     cameras: z.array(z.string()),
+    active_hours_enabled: z.boolean(),
+    active_hours_timezone: z.string(),
+    active_hours_slots: z.array(
+      z.object({ days: z.array(z.string()), start: z.string(), end: z.string() }),
+    ),
   });
 
   const pendingDataBySection = useMemo(
@@ -190,15 +197,29 @@ export default function NotificationsSettingsExtras({
           })
           .map((camera) => camera.name);
 
+    const initialActiveHours = (
+      formData?.active_hours as
+        | { timezone: string; slots: DaySlot[] }
+        | undefined
+    ) ?? config?.notifications.active_hours;
+
     return {
       allEnabled: Boolean(enabledValue),
       email: typeof emailValue === "string" ? emailValue : "",
       cameras: selectedCameras,
+      active_hours_enabled: Boolean(initialActiveHours),
+      active_hours_timezone:
+        initialActiveHours?.timezone ??
+        Intl.DateTimeFormat().resolvedOptions().timeZone,
+      active_hours_slots: initialActiveHours?.slots ?? [
+        { days: ["mon", "tue", "wed", "thu", "fri"], start: "08:00", end: "22:00" },
+      ],
     };
   }, [
     allCameras,
     config?.notifications.email,
     config?.notifications.enabled,
+    config?.notifications.active_hours,
     formContext?.formData,
     notificationCameras,
     pendingCameraOverrides,
@@ -213,15 +234,34 @@ export default function NotificationsSettingsExtras({
   const watchAllEnabled = form.watch("allEnabled");
   const watchCameras = form.watch("cameras");
   const watchEmail = form.watch("email");
+  const watchActiveHoursEnabled = form.watch("active_hours_enabled");
+  const watchActiveHoursTimezone = form.watch("active_hours_timezone");
+
+  const {
+    fields: slotFields,
+    append: appendSlot,
+    remove: removeSlot,
+    replace: replaceSlots,
+    update: updateSlot,
+  } = useFieldArray({ control: form.control, name: "active_hours_slots" });
+
+  // useWatch provides a granular per-render subscription that reliably updates
+  // when nested FormField paths change (form.watch on an array can miss updates)
+  const watchActiveHoursSlots = useWatch({
+    control: form.control,
+    name: "active_hours_slots",
+    defaultValue: defaultValues.active_hours_slots,
+  });
   const pendingCameraOverridesRef = useRef<Set<string>>(new Set());
 
   const resetFormState = useCallback(
     (values: z.infer<typeof formSchema>) => {
       form.reset(values);
+      replaceSlots(values.active_hours_slots);
       setCameraSelectionTouched(false);
       pendingCameraOverridesRef.current.clear();
     },
-    [form],
+    [form, replaceSlots],
   );
 
   // pending changes sync (Undo All / Save All)
@@ -270,8 +310,23 @@ export default function NotificationsSettingsExtras({
     const normalizedEmail = watchEmail?.trim() ? watchEmail : null;
     set(nextData, "enabled", Boolean(watchAllEnabled));
     set(nextData, "email", normalizedEmail);
+    set(
+      nextData,
+      "active_hours",
+      watchActiveHoursEnabled
+        ? { timezone: watchActiveHoursTimezone, slots: watchActiveHoursSlots }
+        : null,
+    );
     formContext.onFormDataChange(nextData as ConfigSectionData);
-  }, [config, formContext, watchAllEnabled, watchEmail]);
+  }, [
+    config,
+    formContext,
+    watchAllEnabled,
+    watchEmail,
+    watchActiveHoursEnabled,
+    watchActiveHoursTimezone,
+    watchActiveHoursSlots,
+  ]);
 
   // camera selection overrides
   const baselineCameraSelection = useMemo(() => {
@@ -288,9 +343,25 @@ export default function NotificationsSettingsExtras({
     return !isEqual([...current].sort(), [...baselineCameraSelection].sort());
   }, [watchCameras, baselineCameraSelection]);
 
+  const activeHoursDirty = useMemo(() => {
+    const saved = config?.notifications.active_hours ?? null;
+    const currentEnabled = Boolean(watchActiveHoursEnabled);
+    if (!currentEnabled && !saved) return false;
+    if (currentEnabled !== Boolean(saved)) return true;
+    return !isEqual(
+      { timezone: watchActiveHoursTimezone, slots: watchActiveHoursSlots },
+      saved,
+    );
+  }, [
+    watchActiveHoursEnabled,
+    watchActiveHoursTimezone,
+    watchActiveHoursSlots,
+    config?.notifications.active_hours,
+  ]);
+
   useEffect(() => {
-    formContext?.setExtraHasChanges?.(cameraSelectionDirty);
-  }, [cameraSelectionDirty, formContext]);
+    formContext?.setExtraHasChanges?.(cameraSelectionDirty || activeHoursDirty);
+  }, [cameraSelectionDirty, activeHoursDirty, formContext]);
 
   useEffect(() => {
     const onPendingDataChange = formContext?.onPendingDataChange;
@@ -621,6 +692,191 @@ export default function NotificationsSettingsExtras({
                   </div>
                 </Form>
               </div>
+            </SettingsGroupCard>
+          )}
+
+          {isAdmin && (
+            <SettingsGroupCard title={t("notification.activeHours.title")}>
+              <Form {...form}>
+                <div className="space-y-4">
+                  {/* Enable toggle */}
+                  <FormField
+                    control={form.control}
+                    name="active_hours_enabled"
+                    render={({ field }) => (
+                      <FormItem className={SPLIT_ROW_CLASS_NAME}>
+                        <div className="space-y-1.5">
+                          <FormLabel>
+                            {t("notification.activeHours.enabled")}
+                          </FormLabel>
+                          <FormDescription>
+                            {t("notification.activeHours.desc")}
+                          </FormDescription>
+                        </div>
+                        <div className={CONTROL_COLUMN_CLASS_NAME}>
+                          <FormControl>
+                            <FilterSwitch
+                              label=""
+                              isChecked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                        </div>
+                      </FormItem>
+                    )}
+                  />
+
+                  {watchActiveHoursEnabled && (
+                    <>
+                      {/* Timezone */}
+                      <FormField
+                        control={form.control}
+                        name="active_hours_timezone"
+                        render={({ field }) => (
+                          <FormItem className={SPLIT_ROW_CLASS_NAME}>
+                            <div className="space-y-1.5">
+                              <FormLabel>
+                                {t("notification.activeHours.timezone")}
+                              </FormLabel>
+                            </div>
+                            <div className={CONTROL_COLUMN_CLASS_NAME}>
+                              <FormControl>
+                                <Input
+                                  {...field}
+                                  placeholder={t(
+                                    "notification.activeHours.timezonePlaceholder",
+                                  )}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </div>
+                          </FormItem>
+                        )}
+                      />
+
+                      {/* Time slots */}
+                      <div className="space-y-3">
+                        {slotFields.map((slot, index) => {
+                          const currentDays =
+                            watchActiveHoursSlots?.[index]?.days ?? [];
+                          return (
+                            <div
+                              key={slot.id}
+                              className="space-y-3 rounded-lg border border-input p-3"
+                            >
+                              {/* Day toggles */}
+                              <div className="flex flex-wrap gap-1.5">
+                                {DAYS_OF_WEEK.map((day) => {
+                                  const isSelected = currentDays.includes(day);
+                                  return (
+                                    <button
+                                      key={day}
+                                      type="button"
+                                      onClick={() => {
+                                        const next = isSelected
+                                          ? currentDays.filter((d) => d !== day)
+                                          : [...currentDays, day];
+                                        updateSlot(index, {
+                                          ...form.getValues(
+                                            `active_hours_slots.${index}`,
+                                          ),
+                                          days: next,
+                                        });
+                                      }}
+                                      className={cn(
+                                        "rounded-md border px-3 py-1 text-sm font-medium transition-colors",
+                                        isSelected
+                                          ? "border-selected bg-selected text-white"
+                                          : "border-input bg-background text-primary hover:bg-accent hover:text-accent-foreground",
+                                      )}
+                                    >
+                                      {t(
+                                        `notification.activeHours.dayNames.${day}`,
+                                      )}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+
+                              {/* Time range + remove */}
+                              <div className="flex items-end gap-3">
+                                <FormField
+                                  control={form.control}
+                                  name={`active_hours_slots.${index}.start`}
+                                  render={({ field }) => (
+                                    <FormItem className="flex-1">
+                                      <FormLabel className="text-xs text-muted-foreground">
+                                        {t("notification.activeHours.startTime")}
+                                      </FormLabel>
+                                      <FormControl>
+                                        <Input
+                                          type="text"
+                                          placeholder="HH:MM"
+                                          maxLength={5}
+                                          {...field}
+                                        />
+                                      </FormControl>
+                                    </FormItem>
+                                  )}
+                                />
+                                <FormField
+                                  control={form.control}
+                                  name={`active_hours_slots.${index}.end`}
+                                  render={({ field }) => (
+                                    <FormItem className="flex-1">
+                                      <FormLabel className="text-xs text-muted-foreground">
+                                        {t("notification.activeHours.endTime")}
+                                      </FormLabel>
+                                      <FormControl>
+                                        <Input
+                                          type="text"
+                                          placeholder="HH:MM"
+                                          maxLength={5}
+                                          {...field}
+                                        />
+                                      </FormControl>
+                                    </FormItem>
+                                  )}
+                                />
+                                {slotFields.length > 1 && (
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    className="mb-0.5 shrink-0 text-destructive hover:text-destructive"
+                                    onClick={() => {
+                                      removeSlot(index);
+                                      form.trigger("active_hours_slots");
+                                    }}
+                                  >
+                                    <LuTrash2 className="size-4" />
+                                  </Button>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() =>
+                            appendSlot({
+                              days: [],
+                              start: "08:00",
+                              end: "22:00",
+                            })
+                          }
+                        >
+                          <LuPlus className="mr-2 size-4" />
+                          {t("notification.activeHours.addSlot")}
+                        </Button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </Form>
             </SettingsGroupCard>
           )}
 

@@ -4,6 +4,7 @@ import datetime
 import json
 import logging
 import os
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 import queue
 import threading
 from dataclasses import dataclass
@@ -163,6 +164,67 @@ class WebPushClient(Communicator):
     def is_camera_suspended(self, camera: str) -> bool:
         return datetime.datetime.now().timestamp() <= self.suspended_cameras[camera]
 
+    def _is_outside_schedule(self, camera: str) -> bool:
+        """Return True if the current time/day falls outside every configured active_hours slot."""
+        try:
+            return self._check_schedule(camera)
+        except Exception:
+            logger.exception(
+                f"Error checking active_hours schedule for {camera}, allowing notification."
+            )
+            return False  # Fail open — never block notifications due to a bug
+
+    def _check_schedule(self, camera: str) -> bool:
+        """Inner schedule check — raises on misconfiguration."""
+        # Camera-specific schedule takes priority over the global schedule
+        schedule = (
+            self.config.cameras[camera].notifications.active_hours
+            or self.config.notifications.active_hours
+        )
+        if schedule is None or not schedule.slots:
+            return False  # No schedule — always active
+
+        try:
+            tz = ZoneInfo(schedule.timezone)
+        except (ZoneInfoNotFoundError, KeyError):
+            logger.warning(
+                f"Invalid timezone '{schedule.timezone}' in active_hours config, falling back to UTC."
+            )
+            tz = ZoneInfo("UTC")
+
+        now = datetime.datetime.now(tz)
+        day_map = {
+            "mon": 0,
+            "tue": 1,
+            "wed": 2,
+            "thu": 3,
+            "fri": 4,
+            "sat": 5,
+            "sun": 6,
+        }
+        current_day = now.weekday()
+
+        for slot in schedule.slots:
+            # Check day match
+            allowed = {day_map[d.lower()] for d in slot.days if d.lower() in day_map}
+            if current_day not in allowed:
+                continue
+
+            # Check time window
+            sh, sm = map(int, slot.start.split(":"))
+            eh, em = map(int, slot.end.split(":"))
+            start = now.replace(hour=sh, minute=sm, second=0, microsecond=0)
+            end = now.replace(hour=eh, minute=em, second=0, microsecond=0)
+
+            if end <= start:  # Overnight slot (e.g. 22:00–06:00)
+                if now >= start or now < end:
+                    return False
+            else:
+                if start <= now < end:
+                    return False
+
+        return True  # No slot matched — outside schedule
+
     def publish(self, topic: str, payload: Any, retain: bool = False) -> None:
         """Wrapper for publishing when client is in valid state."""
         # check for updated global config (notifications, auth)
@@ -194,6 +256,11 @@ class WebPushClient(Communicator):
             if self.is_camera_suspended(camera):
                 logger.debug(f"Notifications for {camera} are currently suspended.")
                 return
+            if self._is_outside_schedule(camera):
+                logger.debug(
+                    f"Notifications for {camera} are outside the active schedule."
+                )
+                return
             self.send_alert(decoded)
         if topic == "triggers":
             decoded = json.loads(payload)
@@ -216,6 +283,11 @@ class WebPushClient(Communicator):
             if self.is_camera_suspended(camera):
                 logger.debug(f"Notifications for {camera} are currently suspended.")
                 return
+            if self._is_outside_schedule(camera):
+                logger.debug(
+                    f"Notifications for {camera} are outside the active schedule."
+                )
+                return
             self.send_trigger(decoded)
         elif topic == "camera_monitoring":
             decoded = json.loads(payload)
@@ -225,13 +297,19 @@ class WebPushClient(Communicator):
             if self.is_camera_suspended(camera):
                 logger.debug(f"Notifications for {camera} are currently suspended.")
                 return
+            if self._is_outside_schedule(camera):
+                logger.debug(
+                    f"Notifications for {camera} are outside the active schedule."
+                )
+                return
             self.send_camera_monitoring(decoded)
         elif topic == "notification_test":
             if not self.config.notifications.enabled and not any(
                 cam.notifications.enabled for cam in self.config.cameras.values()
             ):
-                logger.debug(
-                    "No cameras have notifications enabled, test notification not sent"
+                logger.warning(
+                    "Test notification blocked: notifications are not enabled globally "
+                    "and no cameras have notifications enabled."
                 )
                 return
             self.send_notification_test()
@@ -351,6 +429,9 @@ class WebPushClient(Communicator):
 
     def send_notification_test(self) -> None:
         if not self.config.notifications.email:
+            logger.warning(
+                "Test notification blocked: no email configured in notifications settings."
+            )
             return
 
         self.check_registrations()

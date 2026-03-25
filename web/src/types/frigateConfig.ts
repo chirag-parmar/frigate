@@ -142,6 +142,10 @@ export interface CameraConfig {
     enabled: boolean;
     email?: string;
     enabled_in_config: boolean;
+    active_hours?: {
+      timezone: string;
+      slots: Array<{ days: string[]; start: string; end: string }>;
+    };
   };
   objects: {
     filters: {
@@ -549,6 +553,10 @@ export interface FrigateConfig {
     enabled: boolean;
     email?: string;
     enabled_in_config: boolean;
+    active_hours?: {
+      timezone: string;
+      slots: Array<{ days: string[]; start: string; end: string }>;
+    };
   };
 
   objects: {
