@@ -140,16 +140,10 @@ export default function NotificationsSettingsExtras({
   }, []);
 
   // form
-  const DAYS_OF_WEEK = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
-
   const formSchema = z.object({
     allEnabled: z.boolean(),
     email: z.string(),
     cameras: z.array(z.string()),
-    active_hours_enabled: z.boolean(),
-    active_hours_start: z.string(),
-    active_hours_end: z.string(),
-    active_hours_days: z.array(z.string()),
   });
 
   const pendingDataBySection = useMemo(
@@ -196,33 +190,15 @@ export default function NotificationsSettingsExtras({
           })
           .map((camera) => camera.name);
 
-    const activeHours =
-      (formData?.active_hours as
-        | { start: string; end: string; days: string[] }
-        | undefined) ?? config?.notifications.active_hours;
-
     return {
       allEnabled: Boolean(enabledValue),
       email: typeof emailValue === "string" ? emailValue : "",
       cameras: selectedCameras,
-      active_hours_enabled: Boolean(activeHours),
-      active_hours_start: activeHours?.start ?? "08:00",
-      active_hours_end: activeHours?.end ?? "22:00",
-      active_hours_days: activeHours?.days ?? [
-        "mon",
-        "tue",
-        "wed",
-        "thu",
-        "fri",
-        "sat",
-        "sun",
-      ],
     };
   }, [
     allCameras,
     config?.notifications.email,
     config?.notifications.enabled,
-    config?.notifications.active_hours,
     formContext?.formData,
     notificationCameras,
     pendingCameraOverrides,
@@ -237,10 +213,6 @@ export default function NotificationsSettingsExtras({
   const watchAllEnabled = form.watch("allEnabled");
   const watchCameras = form.watch("cameras");
   const watchEmail = form.watch("email");
-  const watchActiveHoursEnabled = form.watch("active_hours_enabled");
-  const watchActiveHoursStart = form.watch("active_hours_start");
-  const watchActiveHoursEnd = form.watch("active_hours_end");
-  const watchActiveHoursDays = form.watch("active_hours_days");
   const pendingCameraOverridesRef = useRef<Set<string>>(new Set());
 
   const resetFormState = useCallback(
@@ -298,28 +270,8 @@ export default function NotificationsSettingsExtras({
     const normalizedEmail = watchEmail?.trim() ? watchEmail : null;
     set(nextData, "enabled", Boolean(watchAllEnabled));
     set(nextData, "email", normalizedEmail);
-    set(
-      nextData,
-      "active_hours",
-      watchActiveHoursEnabled
-        ? {
-            start: watchActiveHoursStart,
-            end: watchActiveHoursEnd,
-            days: watchActiveHoursDays,
-          }
-        : null,
-    );
     formContext.onFormDataChange(nextData as ConfigSectionData);
-  }, [
-    config,
-    formContext,
-    watchAllEnabled,
-    watchEmail,
-    watchActiveHoursEnabled,
-    watchActiveHoursStart,
-    watchActiveHoursEnd,
-    watchActiveHoursDays,
-  ]);
+  }, [config, formContext, watchAllEnabled, watchEmail]);
 
   // camera selection overrides
   const baselineCameraSelection = useMemo(() => {
@@ -666,141 +618,6 @@ export default function NotificationsSettingsExtras({
                         </FormItem>
                       )}
                     />
-                  </div>
-                </Form>
-              </div>
-            </SettingsGroupCard>
-          )}
-
-          {isAdmin && (
-            <SettingsGroupCard title={t("notification.activeHours.title")}>
-              <div className="space-y-4">
-                <div className="flex flex-col gap-2 text-sm text-primary-variant">
-                  <p>{t("notification.activeHours.desc")}</p>
-                </div>
-                <Form {...form}>
-                  <div className="space-y-4">
-                    <FormField
-                      control={form.control}
-                      name="active_hours_enabled"
-                      render={({ field }) => (
-                        <FormItem className={SPLIT_ROW_CLASS_NAME}>
-                          <div className="space-y-1.5">
-                            <FormLabel>
-                              {t("notification.activeHours.enabled")}
-                            </FormLabel>
-                          </div>
-                          <div className={CONTROL_COLUMN_CLASS_NAME}>
-                            <FormControl>
-                              <FilterSwitch
-                                label=""
-                                isChecked={field.value}
-                                onCheckedChange={field.onChange}
-                              />
-                            </FormControl>
-                          </div>
-                        </FormItem>
-                      )}
-                    />
-
-                    {watchActiveHoursEnabled && (
-                      <>
-                        <FormField
-                          control={form.control}
-                          name="active_hours_start"
-                          render={({ field }) => (
-                            <FormItem className={SPLIT_ROW_CLASS_NAME}>
-                              <div className="space-y-1.5">
-                                <FormLabel>
-                                  {t("notification.activeHours.startTime")}
-                                </FormLabel>
-                              </div>
-                              <div className={CONTROL_COLUMN_CLASS_NAME}>
-                                <FormControl>
-                                  <Input
-                                    type="time"
-                                    className="text-md w-full border border-input bg-background p-2 hover:bg-accent hover:text-accent-foreground dark:[color-scheme:dark] md:w-40"
-                                    {...field}
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </div>
-                            </FormItem>
-                          )}
-                        />
-
-                        <FormField
-                          control={form.control}
-                          name="active_hours_end"
-                          render={({ field }) => (
-                            <FormItem className={SPLIT_ROW_CLASS_NAME}>
-                              <div className="space-y-1.5">
-                                <FormLabel>
-                                  {t("notification.activeHours.endTime")}
-                                </FormLabel>
-                              </div>
-                              <div className={CONTROL_COLUMN_CLASS_NAME}>
-                                <FormControl>
-                                  <Input
-                                    type="time"
-                                    className="text-md w-full border border-input bg-background p-2 hover:bg-accent hover:text-accent-foreground dark:[color-scheme:dark] md:w-40"
-                                    {...field}
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </div>
-                            </FormItem>
-                          )}
-                        />
-
-                        <FormField
-                          control={form.control}
-                          name="active_hours_days"
-                          render={({ field }) => (
-                            <FormItem className={SPLIT_ROW_CLASS_NAME}>
-                              <div className="space-y-1.5">
-                                <FormLabel>
-                                  {t("notification.activeHours.days")}
-                                </FormLabel>
-                              </div>
-                              <div className={CONTROL_COLUMN_CLASS_NAME}>
-                                <div className="flex flex-wrap gap-2">
-                                  {DAYS_OF_WEEK.map((day) => {
-                                    const isSelected =
-                                      field.value.includes(day);
-                                    return (
-                                      <button
-                                        key={day}
-                                        type="button"
-                                        onClick={() => {
-                                          const next = isSelected
-                                            ? field.value.filter(
-                                                (d) => d !== day,
-                                              )
-                                            : [...field.value, day];
-                                          field.onChange(next);
-                                        }}
-                                        className={cn(
-                                          "rounded-md border px-3 py-1 text-sm font-medium transition-colors",
-                                          isSelected
-                                            ? "border-selected bg-selected text-white"
-                                            : "border-input bg-background text-primary hover:bg-accent hover:text-accent-foreground",
-                                        )}
-                                      >
-                                        {t(
-                                          `notification.activeHours.dayNames.${day}`,
-                                        )}
-                                      </button>
-                                    );
-                                  })}
-                                </div>
-                                <FormMessage />
-                              </div>
-                            </FormItem>
-                          )}
-                        />
-                      </>
-                    )}
                   </div>
                 </Form>
               </div>
