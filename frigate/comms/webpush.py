@@ -166,6 +166,16 @@ class WebPushClient(Communicator):
 
     def _is_outside_schedule(self, camera: str) -> bool:
         """Return True if the current time/day falls outside every configured active_hours slot."""
+        try:
+            return self._check_schedule(camera)
+        except Exception:
+            logger.exception(
+                f"Error checking active_hours schedule for {camera}, allowing notification."
+            )
+            return False  # Fail open — never block notifications due to a bug
+
+    def _check_schedule(self, camera: str) -> bool:
+        """Inner schedule check — raises on misconfiguration."""
         # Camera-specific schedule takes priority over the global schedule
         schedule = (
             self.config.cameras[camera].notifications.active_hours
