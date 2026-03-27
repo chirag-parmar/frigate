@@ -4,6 +4,7 @@ import datetime
 import json
 import logging
 import os
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 import queue
 import threading
 from dataclasses import dataclass
@@ -164,16 +165,24 @@ class WebPushClient(Communicator):
         return datetime.datetime.now().timestamp() <= self.suspended_cameras[camera]
 
     def _is_outside_schedule(self, camera: str) -> bool:
-        """Return True if the current time/day is outside the configured active_hours schedule."""
+        """Return True if the current time/day falls outside every configured active_hours slot."""
         # Camera-specific schedule takes priority over the global schedule
         schedule = (
             self.config.cameras[camera].notifications.active_hours
             or self.config.notifications.active_hours
         )
-        if schedule is None:
-            return False  # No schedule configured — always active
+        if schedule is None or not schedule.slots:
+            return False  # No schedule — always active
 
-        now = datetime.datetime.now()
+        try:
+            tz = ZoneInfo(schedule.timezone)
+        except (ZoneInfoNotFoundError, KeyError):
+            logger.warning(
+                f"Invalid timezone '{schedule.timezone}' in active_hours config, falling back to UTC."
+            )
+            tz = ZoneInfo("UTC")
+
+        now = datetime.datetime.now(tz)
         day_map = {
             "mon": 0,
             "tue": 1,
@@ -183,24 +192,30 @@ class WebPushClient(Communicator):
             "sat": 5,
             "sun": 6,
         }
+        current_day = now.weekday()
 
-        # Check day-of-week restriction
-        if schedule.days:
+        for slot in schedule.slots:
+            # Check day match
             allowed = {
-                day_map[d.lower()] for d in schedule.days if d.lower() in day_map
+                day_map[d.lower()] for d in slot.days if d.lower() in day_map
             }
-            if now.weekday() not in allowed:
-                return True
+            if current_day not in allowed:
+                continue
 
-        # Check time window
-        sh, sm = map(int, schedule.start.split(":"))
-        eh, em = map(int, schedule.end.split(":"))
-        start = now.replace(hour=sh, minute=sm, second=0, microsecond=0)
-        end = now.replace(hour=eh, minute=em, second=0, microsecond=0)
+            # Check time window
+            sh, sm = map(int, slot.start.split(":"))
+            eh, em = map(int, slot.end.split(":"))
+            start = now.replace(hour=sh, minute=sm, second=0, microsecond=0)
+            end = now.replace(hour=eh, minute=em, second=0, microsecond=0)
 
-        if end <= start:  # Overnight window (e.g. 22:00–06:00)
-            return not (now >= start or now < end)
-        return not (start <= now < end)
+            if end <= start:  # Overnight slot (e.g. 22:00–06:00)
+                if now >= start or now < end:
+                    return False
+            else:
+                if start <= now < end:
+                    return False
+
+        return True  # No slot matched — outside schedule
 
     def publish(self, topic: str, payload: Any, retain: bool = False) -> None:
         """Wrapper for publishing when client is in valid state."""

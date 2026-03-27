@@ -16,10 +16,11 @@ const notifications: SectionConfigOverrides = {
       email: { "ui:widget": "hidden" },
       cooldown: { "ui:widget": "hidden" },
       enabled_in_config: { "ui:widget": "hidden" },
+      active_hours: { "ui:widget": "hidden" },
     },
   },
   camera: {
-    hiddenFields: ["enabled_in_config", "email"],
+    hiddenFields: ["enabled_in_config", "email", "active_hours"],
   },
 };
 

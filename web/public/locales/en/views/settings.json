@@ -1055,11 +1055,13 @@
     "cancelSuspension": "Cancel Suspension",
     "activeHours": {
       "title": "Active Hours",
-      "desc": "Restrict notifications to a specific time window and days of the week. Camera-level active hours override this global setting.",
+      "desc": "Only send notifications during specific times and days. Camera-level active hours override this global setting.",
       "enabled": "Restrict to active hours",
-      "startTime": "Start time",
-      "endTime": "End time",
-      "days": "Active days",
+      "timezone": "Timezone",
+      "timezonePlaceholder": "e.g. America/New_York",
+      "startTime": "From",
+      "endTime": "To",
+      "addSlot": "Add time slot",
       "dayNames": {
         "mon": "Mon",
         "tue": "Tue",
