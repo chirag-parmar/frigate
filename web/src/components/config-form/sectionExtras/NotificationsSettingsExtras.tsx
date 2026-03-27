@@ -23,7 +23,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { useFieldArray, useForm } from "react-hook-form";
+import { useFieldArray, useForm, useWatch } from "react-hook-form";
 import { LuCheck, LuExternalLink, LuPlus, LuTrash2, LuX } from "react-icons/lu";
 import { CiCircleAlert } from "react-icons/ci";
 import { Link } from "react-router-dom";
@@ -236,7 +236,6 @@ export default function NotificationsSettingsExtras({
   const watchEmail = form.watch("email");
   const watchActiveHoursEnabled = form.watch("active_hours_enabled");
   const watchActiveHoursTimezone = form.watch("active_hours_timezone");
-  const watchActiveHoursSlots = form.watch("active_hours_slots");
 
   const {
     fields: slotFields,
@@ -245,6 +244,14 @@ export default function NotificationsSettingsExtras({
     replace: replaceSlots,
     update: updateSlot,
   } = useFieldArray({ control: form.control, name: "active_hours_slots" });
+
+  // useWatch provides a granular per-render subscription that reliably updates
+  // when nested FormField paths change (form.watch on an array can miss updates)
+  const watchActiveHoursSlots = useWatch({
+    control: form.control,
+    name: "active_hours_slots",
+    defaultValue: defaultValues.active_hours_slots,
+  });
   const pendingCameraOverridesRef = useRef<Set<string>>(new Set());
 
   const resetFormState = useCallback(
@@ -803,8 +810,9 @@ export default function NotificationsSettingsExtras({
                                       </FormLabel>
                                       <FormControl>
                                         <Input
-                                          type="time"
-                                          className="dark:[color-scheme:dark]"
+                                          type="text"
+                                          placeholder="HH:MM"
+                                          maxLength={5}
                                           {...field}
                                         />
                                       </FormControl>
@@ -821,8 +829,9 @@ export default function NotificationsSettingsExtras({
                                       </FormLabel>
                                       <FormControl>
                                         <Input
-                                          type="time"
-                                          className="dark:[color-scheme:dark]"
+                                          type="text"
+                                          placeholder="HH:MM"
+                                          maxLength={5}
                                           {...field}
                                         />
                                       </FormControl>
