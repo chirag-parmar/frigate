@@ -206,9 +206,7 @@ class WebPushClient(Communicator):
 
         for slot in schedule.slots:
             # Check day match
-            allowed = {
-                day_map[d.lower()] for d in slot.days if d.lower() in day_map
-            }
+            allowed = {day_map[d.lower()] for d in slot.days if d.lower() in day_map}
             if current_day not in allowed:
                 continue
 
