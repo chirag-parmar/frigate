@@ -2,7 +2,9 @@
   <img align="center" alt="logo" src="docs/static/img/branding/frigate.png">
 </p>
 
-# Frigate NVR™ - Realtime Object Detection for IP Cameras
+# Bahadur NVR - Realtime Object Detection for IP Cameras
+
+> Bahadur is a fork of [Frigate NVR](https://github.com/blakeblackshear/frigate) maintained by [Congruence Labs](https://congruencelabs.com). See [ATTRIBUTION.md](ATTRIBUTION.md) for details.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
@@ -40,9 +42,7 @@ If you would like to make a donation to support development, please use [Github 
 This project is licensed under the **MIT License**.
 
 - **Code:** The source code, configuration files, and documentation in this repository are available under the [MIT License](LICENSE). You are free to use, modify, and distribute the code as long as you include the original copyright notice.
-- **Trademarks:** The "Frigate" name, the "Frigate NVR" brand, and the Frigate logo are **trademarks of Frigate, Inc.** and are **not** covered by the MIT License.
-
-Please see our [Trademark Policy](TRADEMARK.md) for details on acceptable use of our brand assets.
+- **Trademarks:** The "Frigate" name, the "Frigate NVR" brand, and the Frigate logo are trademarks of Frigate, Inc. and are not covered by the MIT License. Bahadur is a separate fork and does not claim these trademarks.
 
 ## Screenshots
 
