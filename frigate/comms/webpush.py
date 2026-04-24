@@ -4,12 +4,12 @@ import datetime
 import json
 import logging
 import os
-from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 import queue
 import threading
 from dataclasses import dataclass
 from multiprocessing.synchronize import Event as MpEvent
 from typing import Any, Callable
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from py_vapid import Vapid01
 from pywebpush import WebPusher
