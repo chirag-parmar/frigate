@@ -1,7 +1,7 @@
 {
   "documentTitle": {
-    "default": "Live - Frigate",
-    "withCamera": "{{camera}} - Live - Frigate"
+    "default": "Live - Bahadur",
+    "withCamera": "{{camera}} - Live - Bahadur"
   },
   "lowBandwidthMode": "Low-bandwidth Mode",
   "twoWayTalk": {
