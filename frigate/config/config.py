@@ -39,6 +39,7 @@ from frigate.util.image import create_mask
 from frigate.util.services import auto_detect_hwaccel
 
 from .auth import AuthConfig
+from .dashboard import DashboardConfig
 from .base import FrigateBaseModel
 from .camera import CameraConfig, CameraLiveConfig
 from .camera.audio import AudioConfig, AudioFilterConfig
@@ -384,6 +385,11 @@ class FrigateConfig(FrigateBaseModel):
         default_factory=AuthConfig,
         title="Authentication",
         description="Authentication and session-related settings including cookie and rate limit options.",
+    )
+    dashboard: DashboardConfig = Field(
+        default_factory=DashboardConfig,
+        title="Dashboard",
+        description="Configuration for the store statistics dashboard panels.",
     )
     database: DatabaseConfig = Field(
         default_factory=DatabaseConfig,

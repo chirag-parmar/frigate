@@ -2,7 +2,7 @@
   "noRecordingsFoundForThisTime": "No recordings found for this time",
   "noPreviewFound": "No Preview Found",
   "noPreviewFoundFor": "No Preview Found for {{cameraName}}",
-  "submitFrigatePlus": {
+  "submitBahadurPlus": {
     "title": "Submit this frame to Frigate+?",
     "submit": "Submit",
     "previewError": "Could not load snapshot preview. The recording may not be available at this time."
@@ -43,10 +43,10 @@
   },
   "toast": {
     "success": {
-      "submittedFrigatePlus": "Successfully submitted frame to Frigate+"
+      "submittedBahadurPlus": "Successfully submitted frame to Frigate+"
     },
     "error": {
-      "submitFrigatePlusFailed": "Failed to submit frame to Frigate+"
+      "submitBahadurPlusFailed": "Failed to submit frame to Frigate+"
     }
   }
 }

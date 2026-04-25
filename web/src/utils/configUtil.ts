@@ -146,6 +146,10 @@ export function buildOverrides(
   defaults: unknown,
 ): unknown | undefined {
   if (current === null || current === undefined || current === "") {
+    // null explicitly clears a key that had a real value in base (signal deletion)
+    if (current === null && base !== null && base !== undefined) {
+      return "";
+    }
     return undefined;
   }
 

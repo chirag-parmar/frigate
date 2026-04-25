@@ -179,7 +179,7 @@
   },
   "noCameras": {
     "title": "No Cameras Configured",
-    "description": "Get started by connecting a camera to Frigate.",
+    "description": "Get started by connecting a camera to Bahadur.",
     "buttonText": "Add Camera",
     "restricted": {
       "title": "No Cameras Available",
@@ -187,7 +187,7 @@
     },
     "default": {
       "title": "No Cameras Configured",
-      "description": "Get started by connecting a camera to Frigate.",
+      "description": "Get started by connecting a camera to Bahadur.",
       "buttonText": "Add Camera"
     },
     "group": {

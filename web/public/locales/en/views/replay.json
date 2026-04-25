@@ -1,6 +1,6 @@
 {
   "title": "Debug Replay",
-  "description": "Replay camera recordings for debugging. The object list shows a time-delayed summary of detected objects and the Messages tab shows a stream of Frigate's internal messages from the replay footage.",
+  "description": "Replay camera recordings for debugging. The object list shows a time-delayed summary of detected objects and the Messages tab shows a stream of Bahadur's internal messages from the replay footage.",
   "websocket_messages": "Messages",
   "dialog": {
     "title": "Start Debug Replay",
@@ -49,6 +49,6 @@
     "activeTracking": "Active tracking",
     "noActiveTracking": "No active tracking",
     "configuration": "Configuration",
-    "configurationDesc": "Fine tune motion detection and object tracking settings for the debug replay camera. No changes are saved to your Frigate configuration file."
+    "configurationDesc": "Fine tune motion detection and object tracking settings for the debug replay camera. No changes are saved to your Bahadur configuration file."
   }
 }

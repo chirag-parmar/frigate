@@ -716,7 +716,7 @@ export function ConfigSection({
           t("toast.successRestartRequired", {
             ns: "views/settings",
             defaultValue:
-              "Settings saved successfully. Restart Frigate to apply your changes.",
+              "Settings saved successfully. Restart Bahadur to apply your changes.",
           }),
           {
             action: (

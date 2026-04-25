@@ -1,10 +1,10 @@
 {
   "restart": {
-    "title": "Are you sure you want to restart Frigate?",
-    "description": "This will briefly stop Frigate while it restarts.",
+    "title": "Are you sure you want to restart Bahadur?",
+    "description": "This will briefly stop Bahadur while it restarts.",
     "button": "Restart",
     "restarting": {
-      "title": "Frigate is Restarting",
+      "title": "Bahadur is Restarting",
       "content": "This page will reload in {{countdown}} seconds.",
       "button": "Force Reload Now"
     }
@@ -155,10 +155,10 @@
     "shareTimestamp": {
       "label": "Share Timestamp",
       "title": "Share Timestamp",
-      "description": "Share a timestamped URL of current player position or choose a custom timestamp. Note that this is not a public share URL and is only accessible to users with access to Frigate and this camera.",
+      "description": "Share a timestamped URL of current player position or choose a custom timestamp. Note that this is not a public share URL and is only accessible to users with access to Bahadur and this camera.",
       "custom": "Custom Timestamp",
       "button": "Share Timestamp URL",
-      "shareTitle": "Frigate Review Timestamp: {{camera}}"
+      "shareTitle": "Bahadur Review Timestamp: {{camera}}"
     },
     "confirmDelete": {
       "title": "Confirm Delete",

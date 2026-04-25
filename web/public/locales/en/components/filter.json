@@ -48,7 +48,7 @@
     "label": "Features",
     "hasSnapshot": "Has a snapshot",
     "hasVideoClip": "Has a video clip",
-    "submittedToFrigatePlus": {
+    "submittedToBahadurPlus": {
       "label": "Submitted to Frigate+",
       "tips": "You must first filter on tracked objects that have a snapshot.<br /><br />Tracked objects without a snapshot cannot be submitted to Frigate+."
     }

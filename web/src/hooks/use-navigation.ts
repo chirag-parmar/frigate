@@ -6,7 +6,7 @@ import { isDesktop } from "react-device-detect";
 import { FaCompactDisc, FaVideo } from "react-icons/fa";
 import { IoSearch } from "react-icons/io5";
 import { LuConstruction } from "react-icons/lu";
-import { MdCategory, MdChat, MdVideoLibrary } from "react-icons/md";
+import { MdBarChart, MdCategory, MdChat, MdVideoLibrary } from "react-icons/md";
 import { TbFaceId } from "react-icons/tb";
 import useSWR from "swr";
 import { useIsAdmin } from "./use-is-admin";
@@ -19,6 +19,7 @@ export const ID_PLAYGROUND = 5;
 export const ID_FACE_LIBRARY = 6;
 export const ID_CLASSIFICATION = 7;
 export const ID_CHAT = 8;
+export const ID_DASHBOARD = 9;
 
 export default function useNavigation(
   variant: "primary" | "secondary" = "primary",
@@ -58,6 +59,13 @@ export default function useNavigation(
           icon: FaCompactDisc,
           title: "menu.export",
           url: "/export",
+        },
+        {
+          id: ID_DASHBOARD,
+          variant,
+          icon: MdBarChart,
+          title: "menu.dashboard",
+          url: "/dashboard",
         },
         {
           id: ID_PLAYGROUND,

@@ -727,7 +727,7 @@ export default function GeneralSettings({ className }: GeneralSettingsProps) {
                 className={
                   isDesktop ? "cursor-pointer" : "flex items-center p-2 text-sm"
                 }
-                aria-label="Frigate Github"
+                aria-label="Bahadur Github"
               >
                 <LuGithub className="mr-2 size-4" />
                 <span>GitHub</span>

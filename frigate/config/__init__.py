@@ -1,6 +1,7 @@
 from frigate.detectors import DetectorConfig, ModelConfig  # noqa: F401
 
 from .auth import *  # noqa: F403
+from .dashboard import *  # noqa: F403
 from .camera import *  # noqa: F403
 from .camera_group import *  # noqa: F403
 from .classification import *  # noqa: F403

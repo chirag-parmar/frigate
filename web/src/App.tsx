@@ -17,6 +17,7 @@ import ActivityIndicator from "@/components/indicators/activity-indicator";
 import { isRedirectingToLogin } from "@/api/auth-redirect";
 
 const Live = lazy(() => import("@/pages/Live"));
+const Dashboard = lazy(() => import("@/pages/Dashboard"));
 const Events = lazy(() => import("@/pages/Events"));
 const Explore = lazy(() => import("@/pages/Explore"));
 const Exports = lazy(() => import("@/pages/Exports"));
@@ -53,9 +54,10 @@ function DefaultAppView() {
   });
 
   // Compute required roles for main routes, ensuring we have config first
-  // to prevent race condition where custom roles are temporarily unavailable
+  // to prevent race condition where custom roles are temporarily unavailable.
+  // Always include built-in roles (admin, viewer) plus any custom roles.
   const mainRouteRoles = config?.auth?.roles
-    ? Object.keys(config.auth.roles)
+    ? ["admin", "viewer", ...Object.keys(config.auth.roles)]
     : undefined;
 
   // Show loading indicator during redirect to prevent React from attempting to render
@@ -90,6 +92,7 @@ function DefaultAppView() {
           <Routes>
             <Route element={<ProtectedRoute requiredRoles={mainRouteRoles} />}>
               <Route index element={<Live />} />
+              <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/review" element={<Events />} />
               <Route path="/explore" element={<Explore />} />
               <Route path="/export" element={<Exports />} />

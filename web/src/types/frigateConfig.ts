@@ -411,6 +411,14 @@ export interface FrigateConfig {
     };
   };
 
+  dashboard: {
+    panels: {
+      title: string;
+      cameras?: string[];
+      zones?: string[];
+    }[] | null;
+  };
+
   birdseye: BirdseyeConfig;
 
   cameras: {
